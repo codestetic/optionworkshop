@@ -3,6 +3,7 @@ import math
 
 import numpy as np
 from scipy.interpolate import splev, splrep, CubicSpline
+
 from .common import convert_strikes_to_moneyness, calculate_mids_and_errors
 
 
@@ -14,10 +15,9 @@ class IvCurve:
         self.right_poly = right_tail[1]
         self.center_spline = center_spline
 
-
     def iv(self, strike_or_moneyness, current_underlying_price=None) -> float:
         if current_underlying_price is not None:
-            strike_or_moneyness=(strike_or_moneyness - current_underlying_price) / current_underlying_price
+            strike_or_moneyness = (strike_or_moneyness - current_underlying_price) / current_underlying_price
         else:
             x = strike_or_moneyness
             if np.isscalar(x):
@@ -71,9 +71,7 @@ def fit(strikes, bid_ivs, ask_ivs, underlying_price, weighted=False) -> IvCurve:
     idx = np.where((x_l <= x) & (x <= x_r))
     x_center = x[idx]
     y_center = ivs[idx]
-    # w_center = 1 / self.errors[idx]
-    # w_center = w_center / w_center.sum()
-    spl = splrep(x_center, y_center, k=3, s=0.025)  # , w=w_center
+    spl = splrep(x_center, y_center, k=3, s=0.025)
     (knots, coeffs, k_fact) = spl
     unique_knots = list(set(knots))
     unique_knots.sort()
