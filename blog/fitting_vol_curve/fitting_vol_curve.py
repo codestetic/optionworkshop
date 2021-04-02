@@ -6,13 +6,14 @@ from marketdata.readers.optionworkshop import load_series_from_xls
 from pricing.iv import ltcs, polynomial
 import os
 from os import path
+from marketdata import aws
 
 global market_data_root
 global output_path
 global image_format
 global width
 
-image_format = "svg"
+image_format = "png"
 width = 13
 
 
@@ -46,11 +47,12 @@ def get_real_data(asset):
     global market_data_root
 
     if asset == "ES":
+        filepath = aws.download_dataset("ES_20210618_20210302_1650.xls")
         calls, puts, underlying = load_series_from_xls(
-            path.join(market_data_root, "ES_20210618_20210302_1650.xls"), True)
+            path.join(market_data_root, filepath), True)
     elif asset == "CL":
-        calls, puts, underlying = load_series_from_xls(path.join(market_data_root, "CL_20210517_20210322_1530.xls"),
-                                                       True)
+        filepath = aws.download_dataset("CL_20210517_20210322_1530.xls")
+        calls, puts, underlying = load_series_from_xls(path.join(market_data_root, filepath), True)
 
     options = pd.concat([puts[puts.strike < underlying], calls[calls.strike > underlying]])
     strikes = np.array(options['strike'])
