@@ -1,6 +1,5 @@
 from typing import Union
 
-from common import Strategy
 import numpy as np
 
 
