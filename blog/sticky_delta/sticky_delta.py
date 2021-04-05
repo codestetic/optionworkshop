@@ -3,6 +3,7 @@ from datetime import timedelta
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from charting.styles import owblog as stl
 from common.execution import *
 from common.instruments import *
 from marketdata import aws
@@ -42,6 +43,8 @@ price, pnl, exp_pnl = pp.risk_profile(strategy, x, context)
 context.current_underlying_price = strikes[0]
 price1, pnl1, exp_pnl1 = pp.risk_profile(strategy, x, context)
 
-plt.plot(x, pnl, x, pnl1, x, exp_pnl)
+plt.plot(x, pnl, x, pnl1)
+plt.plot(x, exp_pnl, **stl.exp_line)
 plt.grid(True)
+plt.axhline(linewidth=0.5, color='k')
 plt.show()
