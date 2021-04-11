@@ -8,8 +8,11 @@ sqrt2pi = sqrt(2 * pi)
 
 
 def cnd(x):
-    sz = len(x)
-    L = abs(x)
+    if isinstance(x, float) or isinstance(x, int):
+        sz = 1
+    else:
+        sz = len(x)
+    L = np.abs(x)
     K = 1.0 / (1.0 + 0.2316419 * L)
     K2 = K * K
     K3 = K2 * K

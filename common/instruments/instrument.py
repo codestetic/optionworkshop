@@ -30,7 +30,7 @@ class Instrument:
     def tte(self):
         if self.expiration is None:
             return None
-        return (self.expiration - datetime.now()).total_seconds()/365/24/3600
+        return (self.expiration - datetime.now()).total_seconds() / 365 / 24 / 3600
 
     def __hash__(self):
         return hash(self.code)
@@ -82,6 +82,30 @@ class OptionSeries:
             put = Put(self, strike)
             self.calls[strike] = call
             self.puts[strike] = put
+
+    def gns(self, underlying_price: float, shift: int = 0):
+        """
+        Get Nearest Strike
+        Returns strike closest to specified underlying_price. If shift provided,
+        returns strike with corresponding index shift
+        :param underlying_price:
+        """
+        closest_index = None
+        closest_value = None
+        closest_distance = None
+        i = 0
+        for strike in self.strikes:
+            if closest_index is None:
+                closest_distance = abs(underlying_price - strike)
+                closest_index = i
+                closest_value = strike
+            elif abs(underlying_price - strike) < closest_distance:
+                closest_distance = abs(underlying_price - strike)
+                closest_index = i
+                closest_value = strike
+            i = i + 1
+
+        return self.strikes[closest_index + shift]
 
     def __str__(self):
         return self.code

@@ -1,19 +1,22 @@
+import os
+import sys
+from os import path
+
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as pp
-import sys
-from marketdata.readers.optionworkshop import load_series_from_xls
-from pricing.iv import ltcs, polynomial
-import os
-from os import path
+
+from charting.styles import owblog as stl
 from marketdata import aws
+from marketdata.readers.optionworkshop import load_series_from_xls
+from pricing.iv import ltcs, polynomial, spline
 
 global market_data_root
 global output_path
 global image_format
 global width
 
-image_format = "png"
+image_format = "svg"
 width = 13
 
 
@@ -75,13 +78,16 @@ def __plot_extrapolation__(asset, strikes, bid_ivs, ask_ivs, underlying, algo_na
     max_strike = max(strikes)
     xx = np.arange(0.7 * min_strike, 1.2 * max_strike, 0.1)
     iv_f = curve.iv(xx, underlying)
-    pp.plot(strikes, bid_ivs, 'g', strikes, ask_ivs, 'r', alpha=1, marker='.', lw=0)
+    pp.plot(strikes, bid_ivs, 'g^', strikes, ask_ivs, 'rv', **stl.iv_marker)
     pp.plot(xx, iv_f, 'k--', lw=1)
     pp.xlabel('Strikes')
     pp.ylabel('Volatility')
 
-    pp.savefig(f'{output_path}\\volatility-curve-fitting-extrapolated-{algo_name}-{asset}.{image_format}',
-               transparent=False, pad_inches=0.1, bbox_inches='tight')
+    if image_format is None:
+        pp.show()
+    else:
+        pp.savefig(f'{output_path}\\volatility-curve-fitting-extrapolated-{algo_name}-{asset}.{image_format}',
+                   transparent=False, pad_inches=0.1, bbox_inches='tight')
     pp.close(fig)
 
 
@@ -91,7 +97,7 @@ def __plot_abstract_charts__(asset, strikes, bid_ivs, ask_ivs, underlying, curve
     __configure_fig__(fig)
     pp.grid(True)
 
-    pp.plot(strikes, bid_ivs, 'g', strikes, ask_ivs, 'r', alpha=1, marker='.', lw=0)
+    pp.plot(strikes, bid_ivs, 'g^', strikes, ask_ivs, 'rv', **stl.iv_marker)
 
     min_strike = min(strikes)
     max_strike = max(strikes)
@@ -101,8 +107,11 @@ def __plot_abstract_charts__(asset, strikes, bid_ivs, ask_ivs, underlying, curve
     pp.xlabel('Strikes')
     pp.ylabel('Volatility')
 
-    pp.savefig(f'{output_path}\\volatility-curve-fitted-{asset}.{image_format}',
-               transparent=False, pad_inches=0.1, bbox_inches='tight')
+    if image_format is None:
+        pp.show()
+    else:
+        pp.savefig(f'{output_path}\\volatility-curve-fitted-{asset}.{image_format}',
+                   transparent=False, pad_inches=0.1, bbox_inches='tight')
 
     pp.close(fig)
 
@@ -118,7 +127,7 @@ def __plot_basic_charts__(asset, strikes, bid_ivs, ask_ivs, underlying, algo_nam
     ax[0].grid(True)
     ax[1].grid(True)
     pp.setp(ax[0].get_xticklabels(), visible=False)
-    pp.subplots_adjust(hspace=.0)
+    pp.subplots_adjust(hspace=.1)
 
     min_strike = min(strikes)
     max_strike = max(strikes)
@@ -128,7 +137,7 @@ def __plot_basic_charts__(asset, strikes, bid_ivs, ask_ivs, underlying, algo_nam
     iv_real = (ask_ivs + bid_ivs) / 2
     err = iv_f_in_strikes - iv_real
 
-    ax[0].plot(strikes, bid_ivs, 'g', strikes, ask_ivs, 'r', alpha=1, marker='.', lw=0)
+    ax[0].plot(strikes, bid_ivs, 'g^', strikes, ask_ivs, 'rv', **stl.iv_marker)
     ax[0].plot(xx, iv_f, 'k--', lw=1)
     pp.ylabel('Volatility')
     ax[1].plot(strikes, err, 'r.-', lw=1)
@@ -137,9 +146,12 @@ def __plot_basic_charts__(asset, strikes, bid_ivs, ask_ivs, underlying, algo_nam
 
     # fig = pp.gcf()
     dpi = 155
-    pp.savefig(f'{output_path}\\volatility-curve-fitting-basic_{algo_name}-{asset}.{image_format}',
-               transparent=False, pad_inches=0.1, bbox_inches='tight')
-    # pp.show()
+    if image_format is None:
+        pp.show()
+    else:
+        pp.savefig(f'{output_path}\\volatility-curve-fitting-basic_{algo_name}-{asset}.{image_format}',
+                   transparent=False, pad_inches=0.1, bbox_inches='tight')
+
     pp.close(fig)
 
 
@@ -152,10 +164,12 @@ def main():
     for asset in assets:
         strikes, bid_ivs, ask_ivs, underlying = get_real_data(asset)
 
-        curves = [("ltcs", ltcs.fit(strikes, bid_ivs, ask_ivs, underlying)),
-                  ("poly2", polynomial.fit(strikes, bid_ivs, ask_ivs, underlying, poly_degree=2)),
-                  ("poly5", polynomial.fit(strikes, bid_ivs, ask_ivs, underlying, poly_degree=5))
-                  ]
+        curves = [
+            ("ltcs", ltcs.fit(strikes, bid_ivs, ask_ivs, underlying)),
+            ("spline", spline.fit(strikes, bid_ivs, ask_ivs, underlying)),
+            ("poly2", polynomial.fit(strikes, bid_ivs, ask_ivs, underlying, poly_degree=2)),
+            ("poly5", polynomial.fit(strikes, bid_ivs, ask_ivs, underlying, poly_degree=5))
+        ]
 
         __plot_abstract_charts__(asset, strikes, bid_ivs, ask_ivs, underlying, curves[0][1])
 
@@ -167,4 +181,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

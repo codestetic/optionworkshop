@@ -3,16 +3,29 @@ from typing import Union
 from common.execution import *
 from common.instruments import *
 # from .containers import StrategyCalculatedParams
-from .context import *
+from .context import PricingContext
+
+
+def price(option: Option, context: PricingContext, und_price: Union[float, int, np.ndarray],
+          time: Union[float, datetime]):
+
+    if isinstance(time, datetime):
+        time = (option.expiration - time).total_seconds() / 365 / 24 / 3600
+
+    return context.model.price(option.type,
+                               option.strike,
+                               option.tte() if time is None else time,
+                               context.iv(option.strike, und_price),
+                               und_price)
 
 
 def risk_profile(portfolio: Portfolio, underlying_price: Union[np.ndarray, float, int],
-                 context: PricingContext):
+                 context: PricingContext, tte: float = None):
     theor_price = None
     theor_pnl = None
     exp_pnl = None
     for position in portfolio.positions.values():
-        pos_price, pos_pnl, pos_exp_pnl = __position_risk_profile__(position, underlying_price, context)
+        pos_price, pos_pnl, pos_exp_pnl = __position_risk_profile__(position, underlying_price, context, tte)
         if theor_price is None:
             theor_price = pos_price
             theor_pnl = pos_pnl
@@ -26,16 +39,18 @@ def risk_profile(portfolio: Portfolio, underlying_price: Union[np.ndarray, float
 
 
 def __position_risk_profile__(position: Position, underlying_price: Union[np.ndarray, float, int],
-                              context: PricingContext):
+                              context: PricingContext, tte: float = None):
     model = context.model
     q = position.quantity
     if isinstance(position.instrument, Option):
         option = position.instrument
         strike = option.strike
-        price = model.price(option.type, strike, option.tte(), context.iv(strike, underlying_price),
+        price = model.price(option.type, strike,
+                            option.tte() if tte is None else tte,
+                            context.iv(strike, underlying_price),
                             underlying_price)
         expiration_pnl = np.maximum(0, underlying_price - strike) if option.type == OptionType.CALL else np.maximum(0,
-            strike - underlying_price)
+                                                                                                                    strike - underlying_price)
         expiration_pnl = q * (expiration_pnl - position.price)
         return q * price, q * (price - position.price), expiration_pnl
     else:

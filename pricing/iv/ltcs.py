@@ -63,6 +63,13 @@ def fit(strikes, bid_ivs, ask_ivs, underlying_price, weighted=False) -> IvCurve:
     :return:
     """
     x = convert_strikes_to_moneyness(strikes, underlying_price)
+
+    if isinstance(bid_ivs, list):
+        bid_ivs = np.array(bid_ivs)
+
+    if isinstance(ask_ivs, list):
+        ask_ivs = np.array(ask_ivs)
+
     ivs, errors = calculate_mids_and_errors(bid_ivs, ask_ivs)
 
     left_tail, right_tail = __prefit_linear_tails__(x, ivs, bid_ivs, ask_ivs)

@@ -14,4 +14,13 @@ exp_line = {'c': exp_line_color,
             'linestyle': exp_line_style
             }
 
-rp_line_colors = ['#']
+iv_marker_bid_style = '^'
+iv_marker_ask_style = 'v'
+iv_marker_alpha = 0.5
+iv_marker_size = 5
+
+iv_marker = {
+    'markersize': iv_marker_size,
+    'alpha': iv_marker_alpha,
+    'linewidth': 0
+}
